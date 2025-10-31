@@ -30,8 +30,7 @@ A FastAPI-based agent that provides daily Bible verses with AI-powered reflectio
 4. Create a `.env` file with your API keys:
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
-   TELEX_CHANNEL_ID=your_telex_channel_id
-   TELEX_BASE_URL=https://api.telex.im
+   DEFAULT_TRANSLATION=NIV
    ```
 
 ## Configuration
@@ -39,7 +38,6 @@ A FastAPI-based agent that provides daily Bible verses with AI-powered reflectio
 The following environment variables can be set:
 
 - `GEMINI_API_KEY`: Your Google Gemini API key (required)
-- `TELEX_CHANNEL_ID`: Telex channel ID for posting (optional)
 - `TELEX_BASE_URL`: Telex API base URL (default: https://api.telex.im)
 - `DAILY_POST_TIME`: UTC time for daily posts (default: "08:00")
 - `DEFAULT_TRANSLATION`: Bible translation (default: "NIV")
