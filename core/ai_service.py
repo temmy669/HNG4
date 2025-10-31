@@ -92,13 +92,18 @@ async def process_messages(
         Artifact(
             name="verse",
             parts=[
-                MessagePart(kind="text", text=verse_result.verse_text),
-                MessagePart(kind="data", data={
+                MessagePart(kind="text", text=verse_result.verse_text, data={
                     "reference": verse_result.verse_reference,
                     "topic": verse_result.topic,
                     "reflection": verse_result.reflection,
-                    "timestamp": verse_result.timestamp
-                })
+                    "timestamp": verse_result.timestamp}),
+                
+                # MessagePart(kind="data", data={
+                #     "reference": verse_result.verse_reference,
+                #     "topic": verse_result.topic,
+                #     "reflection": verse_result.reflection,
+                #     "timestamp": verse_result.timestamp
+                # })
             ]
         )
     ]
