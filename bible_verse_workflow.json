@@ -1,0 +1,27 @@
+{
+  "active": true,
+  "category": "utilities",
+  "description": "A workflow that provides Bible verses with AI reflections",
+  "id": "9c3b8b1e-7e11-49",
+  "long_description": "\n      You are a helpful Bible verse assistant that provides meaningful Bible verses with AI-generated reflections.\n\n      Your primary function is to help users find relevant Bible verses for specific topics or situations. When responding:\n\n      - Always extract the main topic from the user's query (e.g., \"faith\", \"love\", \"forgiveness\")\n      - Provide a relevant Bible verse from the specified topic\n      - Include an AI-generated reflection to help users understand the verse's meaning\n      - Keep responses concise but spiritually meaningful\n      - If the user asks for daily verses, provide a random verse with reflection\n      - Support both Old and New Testament verses\n\n      Use the bibleVerseTool to fetch verses and generate reflections.\n",
+  "name": "bible_verse_agent",
+  "nodes": [
+    {
+      "id": "bible_verse_agent",
+      "name": "Bible Verse Agent",
+      "parameters": {},
+      "position": [
+        816,
+        -112
+      ],
+      "type": "a2a/mastra-a2a-node",
+      "typeVersion": 1,
+      "url": "https://hng4-production.up.railway.app/a2a"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "short_description": "Provides Bible verses with AI reflections"
+}

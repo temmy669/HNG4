@@ -19,8 +19,12 @@ def get_verse_by_topic(topic: str) -> VerseResult:
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()[0]  # Assuming list
-        verse_reference = f"{data['bookname']} {data['chapter']}:{data['verse']}"
-        verse_text = data['text']
+        # Ensure proper formatting: Book Chapter:Verse
+        bookname = data.get('bookname', 'Unknown')
+        chapter = data.get('chapter', '1')
+        verse = data.get('verse', '1')
+        verse_reference = f"{bookname} {chapter}:{verse}"
+        verse_text = data.get('text', 'Verse text not available')
         return VerseResult(
             topic=topic,
             verse_reference=verse_reference,

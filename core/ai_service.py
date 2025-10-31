@@ -23,10 +23,14 @@ def generate_reflection(verse_text: str, topic: str) -> str:
     """
     Generate a one-sentence reflection on the verse.
     """
-    prompt = f"Provide a one-sentence reflection on this Bible verse related to {topic}: '{verse_text}'"
-    response = model.generate_content(prompt)
-    reflection = response.text.strip()
-    return reflection
+    try:
+        prompt = f"Provide a one-sentence reflection on this Bible verse related to {topic}: '{verse_text}'"
+        response = model.generate_content(prompt)
+        reflection = response.text.strip()
+        return reflection
+    except Exception as e:
+        logger.error(f"Failed to generate reflection: {str(e)}")
+        return f"This verse speaks to the importance of {topic} in our spiritual journey."
 
 def process_verse_request(query: str) -> VerseResult:
     """
