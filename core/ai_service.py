@@ -92,25 +92,24 @@ async def process_messages(
         Artifact(
             name="verse",
             parts=[
-                    MessagePart(
-                        kind="text",
-                        text=(
-                            f"📖 *{verse_result.topic.title()}*\n\n"
-                            f"{verse_result.verse_reference}\n"
-                            f"{verse_result.verse_text}\n\n"
-                            f"🕊️ Reflection: {verse_result.reflection}"
-                        )
-                    ),
-                    MessagePart(
-                        kind="data",
-                        data={
-                            "reference": verse_result.verse_reference,
-                            "topic": verse_result.topic,
-                            "reflection": verse_result.reflection,
-                            "timestamp": verse_result.timestamp
-                        }
+                MessagePart(
+                    kind="text",
+                    text=(
+                        f"📖 *{verse_result.topic.title()}*\n\n"
+                        f"{verse_result.verse_reference}\n"
+                        f"{verse_result.verse_text}\n\n"
+                        f"🕊️ Reflection: {verse_result.reflection}"
                     )
-                ]
+                ),
+                MessagePart(
+                    kind="data",
+                    data={
+                        "reference": verse_result.verse_reference,
+                        "topic": verse_result.topic,
+                        "reflection": verse_result.reflection,
+                        "timestamp": verse_result.timestamp
+                    }
+                )
 
             ]
         )
