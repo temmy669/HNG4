@@ -50,9 +50,11 @@ app = FastAPI(
 @app.post("/a2a")
 async def a2a_endpoint(request: Request):
     """Main A2A endpoint for verse agent"""
+    logger.info(f"Received A2A request from {request.client.host}")
     try:
         # Parse request body
         body = await request.json()
+        logger.info(f"Request body: {body}")
 
         # Validate JSON-RPC request
         if body.get("jsonrpc") != "2.0" or "id" not in body:

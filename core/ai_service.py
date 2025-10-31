@@ -48,9 +48,12 @@ async def process_messages(
     Process A2A messages and return TaskResult for verse requests.
     This is the main entry point for A2A protocol processing.
     """
+    logger.info(f"Processing messages for context {context_id}, task {task_id}")
+
     # Extract last user message
     user_message = messages[-1] if messages else None
     if not user_message:
+        logger.error("No message provided in messages")
         raise ValueError("No message provided")
 
     # Extract query from message parts
@@ -61,6 +64,7 @@ async def process_messages(
             break
 
     if not query:
+        logger.error("No text query found in message parts")
         raise ValueError("No text query found in message")
 
     logger.info(f"Processing verse request: {query}")
