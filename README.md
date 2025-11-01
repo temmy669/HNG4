@@ -30,9 +30,8 @@ A FastAPI-based agent that provides daily Bible verses with AI-powered reflectio
 4. Create a `.env` file with your API keys:
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
-   BIBLE_API_KEY=your_api_bible_key_here
-   TELEX_WEBHOOK_HOOK_ID=019a3cb6-f1aa-7817-af7e-49baddd4022b
-   TELEX_BEARER_TOKEN=your_bearer_token_here
+   BIBLE_API_KEY=your_api_bible_key_here --> If applicable
+   TELEX_WEBHOOK_HOOK_ID= your_hook_id   TELEX_BEARER_TOKEN=your_bearer_token_here
    DAILY_POST_TIME=08:00
    DEFAULT_TRANSLATION=NIV
    ```

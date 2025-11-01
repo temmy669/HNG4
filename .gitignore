@@ -98,9 +98,6 @@ __pypa__/
 celerybeat-schedule
 celerybeat.pid
 
-#TODO list
-TODO.md
-
 # SageMath parsed files
 *.sage.py
 

@@ -1,103 +1,72 @@
 import requests
-from .config import BIBLE_API_BASE_URL, BIBLE_API_KEY, BIBLE_ID
+from .config import BIBLE_API_BASE_URL, DEFAULT_TRANSLATION
 from .models import VerseResult
+from .ai_service import generate_verse_reference
 import random
-import re
+import logging
+
+logger = logging.getLogger(__name__)
 
 def get_verse_by_topic(topic: str) -> VerseResult:
     """
-    Query the Bible API for a verse related to the topic using api.bible search.
+    Query the Bible API for a verse related to the topic.
+    First, generate a specific verse reference using AI, then fetch it.
+    Fallback to random if the reference fails.
     """
-    headers = {"api-key": BIBLE_API_KEY}
-
-    # First, search for passages related to the topic
-    search_url = f"{BIBLE_API_BASE_URL}/bibles/{BIBLE_ID}/search"
-    params = {
-        "query": topic,
-        "limit": 10,
-        "sort": "relevance"
-    }
-
     try:
-        search_response = requests.get(search_url, headers=headers, params=params)
-        if search_response.status_code == 200:
-            search_data = search_response.json()
-            if search_data.get("data", {}).get("passages"):
-                # Get a random passage from search results
-                passages = search_data["data"]["passages"]
-                passage = random.choice(passages)
+        # Generate a specific verse reference
+        reference = generate_verse_reference(topic)
+        logger.info(f"Generated reference for topic '{topic}': {reference}")
 
-                # Extract verse details
-                reference = passage["reference"]
-                content = passage["content"]
-
-                # Clean up HTML tags from content
-                clean_content = re.sub(r'<[^>]+>', '', content)
-
+        # Clean the reference (remove extra text if any)
+        # Assume format like "John 3:16"
+        url = f"{BIBLE_API_BASE_URL}/?passage={reference}&type=json"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            if data and isinstance(data, list) and len(data) > 0:
+                verse_data = data[0]
+                verse_reference = f"{verse_data['bookname']} {verse_data['chapter']}:{verse_data['verse']}"
+                verse_text = verse_data['text']
                 return VerseResult(
                     topic=topic,
-                    verse_reference=reference,
-                    verse_text=clean_content.strip(),
+                    verse_reference=verse_reference,
+                    verse_text=verse_text,
                     reflection=None  # Will be added by AI
                 )
-
-        # Fallback: get a random verse if search fails
-        return get_random_verse(topic)
-
+            else:
+                logger.warning(f"No verse found for reference: {reference}")
+        else:
+            logger.warning(f"API error for reference {reference}: {response.status_code}")
     except Exception as e:
-        print(f"Search failed: {e}")
-        return get_random_verse(topic)
+        logger.error(f"Failed to generate or fetch verse for topic '{topic}': {str(e)}")
+
+    # Fallback to random verse
+    logger.info(f"Falling back to random verse for topic '{topic}'")
+    return get_random_verse(topic)
 
 def get_random_verse(topic: str) -> VerseResult:
     """
-    Fallback: Get a random verse from the Bible.
+    Fetch a random verse as fallback.
     """
-    headers = {"api-key": BIBLE_API_KEY}
-
-    # Get books first
-    books_url = f"{BIBLE_API_BASE_URL}/bibles/{BIBLE_ID}/books"
-    books_response = requests.get(books_url, headers=headers)
-
-    if books_response.status_code == 200:
-        books = books_response.json()["data"]
-        book = random.choice(books)
-
-        # Get chapters for the selected book
-        chapters_url = f"{BIBLE_API_BASE_URL}/bibles/{BIBLE_ID}/books/{book['id']}/chapters"
-        chapters_response = requests.get(chapters_url, headers=headers)
-
-        if chapters_response.status_code == 200:
-            chapters = chapters_response.json()["data"]
-            chapter = random.choice(chapters)
-
-            # Get verses for the selected chapter
-            verses_url = f"{BIBLE_API_BASE_URL}/bibles/{BIBLE_ID}/chapters/{chapter['id']}/verses"
-            verses_response = requests.get(verses_url, headers=headers)
-
-            if verses_response.status_code == 200:
-                verses = verses_response.json()["data"]
-                verse = random.choice(verses)
-
-                # Get the actual verse content
-                verse_url = f"{BIBLE_API_BASE_URL}/bibles/{BIBLE_ID}/verses/{verse['id']}"
-                verse_response = requests.get(verse_url, headers=headers, params={"include-chapter-numbers": "false"})
-
-                if verse_response.status_code == 200:
-                    verse_data = verse_response.json()["data"]
-                    reference = verse_data["reference"]
-                    content = verse_data["content"]
-
-                    # Clean up HTML tags
-                    clean_content = re.sub(r'<[^>]+>', '', content)
-
-                    return VerseResult(
-                        topic=topic,
-                        verse_reference=reference,
-                        verse_text=clean_content.strip(),
-                        reflection=None
-                    )
-
-    raise Exception("Failed to fetch verse from Bible API")
+    url = f"{BIBLE_API_BASE_URL}/?passage=random&type=json"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()[0]  # Assuming list
+        # Ensure proper formatting: Book Chapter:Verse
+        bookname = data.get('bookname', 'Unknown')
+        chapter = data.get('chapter', '1')
+        verse = data.get('verse', '1')
+        verse_reference = f"{bookname} {chapter}:{verse}"
+        verse_text = data.get('text', 'Verse text not available')
+        return VerseResult(
+            topic=topic,
+            verse_reference=verse_reference,
+            verse_text=verse_text,
+            reflection=None  # Will be added by AI
+        )
+    else:
+        raise Exception("Failed to fetch random verse from Bible API")
 
 def get_daily_verse() -> VerseResult:
     """
