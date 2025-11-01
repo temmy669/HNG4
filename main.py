@@ -161,14 +161,19 @@ async def process_messages(
     if not user_message:
         raise ValueError("No message provided")
 
-    # Extract query from message parts
+   
+    # Extract the last valid user-entered text message
     query = ""
-    for part in user_message.parts:
-        if part.kind == "text" and part.text:
-            query = part.text.strip()
+    for part in reversed(user_message.parts):  # Check from last → first
+        if part.kind == "text":
+            clean_text = part.text.strip()
+            # Ignore empty or HTML-only strings like "<p></p>"
+            if clean_text and clean_text not in ["<p></p>", "<p><br></p>"]:
+                query = clean_text
             break
 
     if not query:
+        logger.warning("No valid user query detected in message parts")
         raise ValueError("No text query found in message")
 
     logger.info(f"Processing verse request: {query}")
