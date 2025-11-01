@@ -30,6 +30,8 @@ A FastAPI-based agent that provides daily Bible verses with AI-powered reflectio
 4. Create a `.env` file with your API keys:
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
+   TELEX_WEBHOOK_URL=https://ping.telex.im/v1/webhooks/your-webhook-id
+   DAILY_POST_TIME=08:00
    DEFAULT_TRANSLATION=NIV
    ```
 
@@ -39,6 +41,7 @@ The following environment variables can be set:
 
 - `GEMINI_API_KEY`: Your Google Gemini API key (required)
 - `TELEX_BASE_URL`: Telex API base URL (default: https://api.telex.im)
+- `TELEX_WEBHOOK_URL`: Webhook URL for posting daily verses to Telex (required for daily posts)
 - `DAILY_POST_TIME`: UTC time for daily posts (default: "08:00")
 - `DEFAULT_TRANSLATION`: Bible translation (default: "NIV")
 
@@ -168,6 +171,29 @@ pytest test_main.py
 - Python-dotenv: Environment variable management
 - Pytest: Testing framework
 - HTTPX: Async HTTP client for testing
+
+## Daily Verse Posting
+
+The agent automatically posts daily verses to Telex channels using webhooks. To set this up:
+
+1. **Get your Telex Webhook URL**: In your Telex integration settings, find the webhook URL (usually `https://ping.telex.im/v1/webhooks/your-webhook-id`)
+
+2. **Configure Environment Variables**:
+
+   ```env
+   TELEX_WEBHOOK_URL=https://ping.telex.im/v1/webhooks/your-webhook-id
+   DAILY_POST_TIME=08:00  # UTC time
+   ```
+
+3. **Webhook Message Format**:
+   ```json
+   {
+     "event_name": "daily_verse",
+     "message": "📖 **Daily Bible Verse**\n\n**Genesis 1:1**\nIn the beginning God created the heavens and the earth.\n\n💭 *This verse speaks to the importance of faith in our spiritual journey.*",
+     "status": "success",
+     "username": "Bible Verse Bot"
+   }
+   ```
 
 ## Future Improvements
 

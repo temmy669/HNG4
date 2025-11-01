@@ -19,3 +19,4 @@ DAILY_POST_TIME = os.getenv("DAILY_POST_TIME") # UTC time for daily verse, e.g.,
 # Telex A2A settings (placeholders)
 TELEX_BASE_URL = os.getenv("TELEX_BASE_URL", "https://api.telex.im")
 TELEX_CHANNEL_ID = os.getenv("TELEX_CHANNEL_ID")
+TELEX_WEBHOOK_URL = os.getenv("TELEX_WEBHOOK_URL")  # Webhook URL for posting daily verses
