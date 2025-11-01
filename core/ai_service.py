@@ -65,11 +65,32 @@ def process_verse_request(query: str):
     return verse
 
 
+def extract_latest_user_text(message_parts) -> str:
+    """
+    Extract the latest valid user text from message parts.
+    Handles nested data structures where text might be inside "data" blocks.
+    """
+    # Iterate through parts in reverse order to get the latest
+    for part in reversed(message_parts):
+        if part.kind == "text" and part.text and part.text.strip():
+            clean_text = part.text.strip()
+            # Skip HTML-only content
+            if clean_text not in ["<p></p>", "<p><br></p>", ""]:
+                return clean_text
+        elif part.kind == "data" and isinstance(part.data, list):
+            # Look inside the data list for text parts
+            for sub_part in reversed(part.data):
+                if isinstance(sub_part, dict) and sub_part.get("kind") == "text" and sub_part.get("text") and sub_part["text"].strip():
+                    clean_text = sub_part["text"].strip()
+                    if clean_text not in ["<p></p>", "<p><br></p>", ""]:
+                        return clean_text
+    return ""
+
 async def process_messages(
     messages: list[A2AMessage],
     context_id: str,
     task_id: str,
-    config: dict = None
+    config: dict = {}
 ) -> TaskResult:
     """
     Process A2A messages and return TaskResult for verse requests.
@@ -83,16 +104,13 @@ async def process_messages(
         logger.error("No message provided in messages")
         raise ValueError("No message provided")
 
-    # Extract query from message parts
-    query = ""
-    for part in user_message.parts:
-        if part.kind == "text":
-            query = part.text.strip()
-            break
+    # Extract query from message parts using robust extraction
+    query = extract_latest_user_text(user_message.parts)
 
     if not query:
-        logger.error("No text query found in message parts")
-        raise ValueError("No text query found in message")
+        logger.warning("No valid user query detected in message parts")
+        # Handle as casual chat instead of error
+        query = "__CASUAL_CHAT__"
 
     logger.info(f"Processing verse request: {query}")
 
