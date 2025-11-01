@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 import logging
 from uuid import uuid4
+from typing import Optional, List
 
 from core.models import (
     JSONRPCRequest, JSONRPCResponse, TaskResult, TaskStatus,
@@ -148,6 +149,27 @@ async def a2a_endpoint(request: Request):
             }
         )
 
+def extract_latest_user_text(message_parts: List) -> Optional[str]:
+    """
+    Extract the latest valid user text from message parts.
+    Handles nested data structures where text might be inside "data" blocks.
+    """
+    # Iterate through parts in reverse order to get the latest
+    for part in reversed(message_parts):
+        if part.kind == "text" and part.text and part.text.strip():
+            clean_text = part.text.strip()
+            # Skip HTML-only content
+            if clean_text not in ["<p></p>", "<p><br></p>", ""]:
+                return clean_text
+        elif part.kind == "data" and isinstance(part.data, list):
+            # Look inside the data list for text parts
+            for sub_part in reversed(part.data):
+                if isinstance(sub_part, dict) and sub_part.get("kind") == "text" and sub_part.get("text") and sub_part["text"].strip():
+                    clean_text = sub_part["text"].strip()
+                    if clean_text not in ["<p></p>", "<p><br></p>", ""]:
+                        return clean_text
+    return None
+
 async def process_messages(
     messages: list[A2AMessage],
     context_id: str,
@@ -161,20 +183,13 @@ async def process_messages(
     if not user_message:
         raise ValueError("No message provided")
 
-   
-    # Extract the last valid user-entered text message
-    query = ""
-    for part in reversed(user_message.parts):  # Check from last → first
-        if part.kind == "text":
-            clean_text = part.text.strip()
-            # Ignore empty or HTML-only strings like "<p></p>"
-            if clean_text and clean_text not in ["<p></p>", "<p><br></p>"]:
-                query = clean_text
-            break
+    # Extract query from message parts using robust extraction
+    query = extract_latest_user_text(user_message.parts)
 
     if not query:
         logger.warning("No valid user query detected in message parts")
-        raise ValueError("No text query found in message")
+        # Handle as casual chat instead of error
+        query = "__CASUAL_CHAT__"
 
     logger.info(f"Processing verse request: {query}")
 

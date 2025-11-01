@@ -126,8 +126,6 @@ async def process_messages(
         )
 
 
-   
-
     # Build artifacts
     if verse_result:
         artifacts = [
