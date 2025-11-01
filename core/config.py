@@ -6,9 +6,10 @@ load_dotenv()
 # Gemini API Key
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# Bible API settings
-BIBLE_API_BASE_URL = "https://labs.bible.org/api"
-BIBLE_API_KEY = os.getenv("BIBLE_API_KEY")  # If required, but labs.bible.org might not need one
+# Bible API settings (using api.bible for better search support)
+BIBLE_API_BASE_URL = "https://api.scripture.api.bible/v1"
+BIBLE_API_KEY = os.getenv("BIBLE_API_KEY")  # Required for api.bible
+BIBLE_ID = "de4e12af7f28f599-02"  # NIV translation ID on api.bible
 
 # Default translation
 DEFAULT_TRANSLATION = "NIV"  # Can be configurable
