@@ -30,7 +30,8 @@ A FastAPI-based agent that provides daily Bible verses with AI-powered reflectio
 4. Create a `.env` file with your API keys:
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
-   TELEX_WEBHOOK_URL=https://ping.telex.im/v1/webhooks/your-webhook-id
+   TELEX_WEBHOOK_HOOK_ID=019a3cb6-f1aa-7817-af7e-49baddd4022b
+   TELEX_BEARER_TOKEN=your_bearer_token_here
    DAILY_POST_TIME=08:00
    DEFAULT_TRANSLATION=NIV
    ```
@@ -41,7 +42,7 @@ The following environment variables can be set:
 
 - `GEMINI_API_KEY`: Your Google Gemini API key (required)
 - `TELEX_BASE_URL`: Telex API base URL (default: https://api.telex.im)
-- `TELEX_WEBHOOK_URL`: Webhook URL for posting daily verses to Telex (required for daily posts)
+- `TELEX_WEBHOOK_URL`: Webhook URL for posting daily verses to a Telex chanel (required for daily posts)
 - `DAILY_POST_TIME`: UTC time for daily posts (default: "08:00")
 - `DEFAULT_TRANSLATION`: Bible translation (default: "NIV")
 
@@ -174,24 +175,43 @@ pytest test_main.py
 
 ## Daily Verse Posting
 
-The agent automatically posts daily verses to Telex channels using webhooks. To set this up:
+The agent automatically posts daily verses to Telex channels using A2A webhooks. To set this up:
 
-1. **Get your Telex Webhook URL**: In your Telex integration settings, find the webhook URL (usually `https://ping.telex.im/v1/webhooks/your-webhook-id`)
+1. **Get your Telex Webhook Hook ID**: In your Telex integration settings, find the webhook URL and extract the UUID (e.g., `019a3cb6-f1aa-7817-af7e-49baddd4022b` from `https://api.telex.im/a2a/webhooks/{your_chanel_id_here}`)
 
-2. **Configure Environment Variables**:
+2. **Get your Bearer Token**: Obtain the Bearer token from your Telex integration settings
+
+3. **Configure Environment Variables**:
 
    ```env
-   TELEX_WEBHOOK_URL=https://ping.telex.im/v1/webhooks/your-webhook-id
+   TELEX_WEBHOOK_HOOK_ID=
+   TELEX_BEARER_TOKEN=your_bearer_token_here
    DAILY_POST_TIME=08:00  # UTC time
    ```
 
-3. **Webhook Message Format**:
+4. **A2A Webhook Message Format**:
    ```json
    {
-     "event_name": "daily_verse",
-     "message": "📖 **Daily Bible Verse**\n\n**Genesis 1:1**\nIn the beginning God created the heavens and the earth.\n\n💭 *This verse speaks to the importance of faith in our spiritual journey.*",
-     "status": "success",
-     "username": "Bible Verse Bot"
+     "jsonrpc": "2.0",
+     "id": "75d53d9705054a60b1cb2d2d1887c242",
+     "method": "message/send",
+     "params": {
+       "message": {
+         "kind": "message",
+         "role": "agent",
+         "parts": [
+           {
+             "kind": "text",
+             "text": "📖 **Daily Bible Verse**\n\n**Genesis 1:1**\nIn the beginning God created the heavens and the earth.\n\n💭 *This verse speaks to the importance of faith in our spiritual journey.*",
+             "metadata": null
+           }
+         ],
+         "messageId": "db84ba2b62a0422e968d56591b9bb01a",
+         "contextId": null,
+         "taskId": null
+       },
+       "metadata": null
+     }
    }
    ```
 
