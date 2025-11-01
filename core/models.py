@@ -8,7 +8,7 @@ import time
 class MessagePart(BaseModel):
     kind: Literal["text", "data", "file"]
     text: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
+    data: Optional[Any] = None  # Allow dict, list, or other types
     file_url: Optional[str] = None
 
 class A2AMessage(BaseModel):

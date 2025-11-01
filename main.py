@@ -50,7 +50,7 @@ app = FastAPI(
 @app.post("/a2a")
 async def a2a_endpoint(request: Request):
     """Main A2A endpoint for verse agent"""
-    logger.info(f"Received A2A request from {request.client.host}")
+    logger.info(f"Received A2A request from {request.client.host if request.client else 'unknown'}")
     try:
         # Parse request body
         body = await request.json()
@@ -78,14 +78,18 @@ async def a2a_endpoint(request: Request):
         task_id = None
         config = {}
 
-        if rpc_request.method == "message/send":
+        # Handle different method types safely
+        if hasattr(rpc_request.params, 'message'):
+            # message/send method
             messages = [rpc_request.params.message]
-            config = rpc_request.params.configuration.model_dump() if rpc_request.params.configuration else {}
-        elif rpc_request.method == "execute":
+            config = rpc_request.params.configuration.model_dump() if hasattr(rpc_request.params, 'configuration') and rpc_request.params.configuration else {}
+        elif hasattr(rpc_request.params, 'messages'):
+            # execute method
             messages = rpc_request.params.messages
-            context_id = rpc_request.params.contextId
-            task_id = rpc_request.params.taskId
+            context_id = getattr(rpc_request.params, 'contextId', None)
+            task_id = getattr(rpc_request.params, 'taskId', None)
         else:
+            # Handle unknown methods gracefully
             return JSONResponse(
                 status_code=200,
                 content={
@@ -172,32 +176,47 @@ async def process_messages(
     # Process the verse request (using existing logic)
     verse_result = process_verse_request(query)
 
-    # Build response message
-    response_text = f"Here's a verse on '{verse_result.topic}':\n\n{verse_result.verse_reference}\n{verse_result.verse_text}"
-    if verse_result.reflection:
-        response_text += f"\n\nReflection: {verse_result.reflection}"
+    if verse_result:
+        # Build response message for verse
+        response_text = f"Here's a verse on '{verse_result.topic}':\n\n{verse_result.verse_reference}\n{verse_result.verse_text}"
+        if verse_result.reflection:
+            response_text += f"\n\nReflection: {verse_result.reflection}"
 
-    response_message = A2AMessage(
-        role="agent",
-        parts=[MessagePart(kind="text", text=response_text)],
-        taskId=task_id
-    )
-
-    # Build artifacts
-    artifacts = [
-        Artifact(
-            name="verse",
-            parts=[
-                MessagePart(kind="text", text=verse_result.verse_text),
-                MessagePart(kind="data", data={
-                    "reference": verse_result.verse_reference,
-                    "topic": verse_result.topic,
-                    "reflection": verse_result.reflection,
-                    "timestamp": verse_result.timestamp
-                })
-            ]
+        response_message = A2AMessage(
+            role="agent",
+            parts=[MessagePart(kind="text", text=response_text)],
+            taskId=task_id
         )
-    ]
+
+        # Build artifacts
+        artifacts = [
+            Artifact(
+                name="verse",
+                parts=[
+                    MessagePart(kind="text", text=verse_result.verse_text),
+                    MessagePart(kind="data", data={
+                        "reference": verse_result.verse_reference,
+                        "topic": verse_result.topic,
+                        "reflection": verse_result.reflection,
+                        "timestamp": verse_result.timestamp
+                    })
+                ]
+            )
+        ]
+    else:
+        # Handle casual chat
+        response_text = "Good morning to you too!\n\nWould you like me to share a Bible verse? You can say something like: I need a verse on Love."
+        response_message = A2AMessage(
+            role="agent",
+            parts=[MessagePart(kind="text", text=response_text)],
+            taskId=task_id
+        )
+        artifacts = [
+            Artifact(
+                name="chat_response",
+                parts=[MessagePart(kind="text", text=response_text)]
+            )
+        ]
 
     # Build history
     history = messages + [response_message]
