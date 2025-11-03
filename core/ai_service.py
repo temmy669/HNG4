@@ -130,7 +130,7 @@ async def process_messages(
         )
     else:
         # Just casual chat reply
-        #generate model response based of user query
+        #generate model response based off user query
             response = model.generate_content(
                             f"You are a friendly assistant. Reply briefly and naturally to this message: '{query}'. \
                         If they didn't ask for a Bible verse, respond casually and at the end politely ask: \
