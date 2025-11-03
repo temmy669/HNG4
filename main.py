@@ -67,16 +67,15 @@ async def a2a_endpoint(request: Request):
         body = await request.json()
         logger.info(f"Request body: {body}")
 
-        # Validate JSON-RPC request
         if body.get("jsonrpc") != "2.0" or "id" not in body:
             return JSONResponse(
-                status_code=400,
+                status_code=200,   
                 content={
                     "jsonrpc": "2.0",
                     "id": body.get("id"),
                     "error": {
                         "code": -32600,
-                        "message": "Invalid Request: jsonrpc must be '2.0' and id is required"
+                        "message": "Invalid Request"
                     }
                 }
             )
