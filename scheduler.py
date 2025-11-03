@@ -47,19 +47,6 @@ async def send_webhook_notification(
         }
     }
 
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.post(
-                webhook_url,
-                json=jsonrpc_payload,
-                headers=headers,
-                timeout=30.0
-            )
-            logger.info(f"Webhook sent successfully to {webhook_url}, status: {response.status_code}")
-            if response.status_code >= 400:
-                logger.error(f"Webhook failed: {response.status_code} - {response.text}")
-        except Exception as e:
-            logger.error(f"Failed to send webhook to {webhook_url}: {e}")
 
 async def post_daily_verse_async():
     """
@@ -105,29 +92,29 @@ async def post_daily_verse_async():
         )
 
         # Send to Telex A2A webhook if configured
-        if TELEX_WEBHOOK_HOOK_ID and TELEX_BEARER_TOKEN:
-            webhook_url = f"{TELEX_BASE_URL}/v1/a2a/webhooks/{TELEX_WEBHOOK_HOOK_ID}"
-            auth = {"schemes": ["Bearer"], "credentials": TELEX_BEARER_TOKEN} if TELEX_BEARER_TOKEN else None
-            await send_webhook_notification(webhook_url, result, auth)
-            logger.info(f"Daily verse posted successfully: {verse.verse_reference}")
-        else:
+        # if TELEX_WEBHOOK_HOOK_ID and TELEX_BEARER_TOKEN:
+        #     webhook_url = f"{TELEX_BASE_URL}/v1/a2a/webhooks/{TELEX_WEBHOOK_HOOK_ID}"
+        #     auth = {"schemes": ["Bearer"], "credentials": TELEX_BEARER_TOKEN} if TELEX_BEARER_TOKEN else None
+        #     await send_webhook_notification(webhook_url, result, auth)
+        #     logger.info(f"Daily verse posted successfully: {verse.verse_reference}")
+        # else:
             # Try to use stored webhook config from incoming requests
-            try:
-                from main import webhook_configs
-                stored_config = webhook_configs.get("default")
-                if stored_config and stored_config.get('url'):
-                    auth = stored_config.get('authentication')
-                    await send_webhook_notification(stored_config['url'], result, auth)
-                    logger.info(f"Daily verse posted to stored webhook: {verse.verse_reference}")
-                else:
-                    logger.warning("No webhook configuration available, logging verse instead")
-                    logger.info(f"Daily Verse: {verse.verse_reference} - {verse.verse_text} - Reflection: {verse.reflection}")
-            except ImportError:
+        try:
+            from main import webhook_configs
+            stored_config = webhook_configs.get("default")
+            if stored_config and stored_config.get('url'):
+                auth = stored_config.get('authentication')
+                await send_webhook_notification(stored_config['url'], result, auth)
+                logger.info(f"Daily verse posted to stored webhook: {verse.verse_reference}")
+            else:
+                logger.warning("No webhook configuration available, logging verse instead")
+                logger.info(f"Daily Verse: {verse.verse_reference} - {verse.verse_text} - Reflection: {verse.reflection}")
+        except ImportError:
                 logger.warning("Could not import webhook configs, logging verse instead")
                 logger.info(f"Daily Verse: {verse.verse_reference} - {verse.verse_text} - Reflection: {verse.reflection}")
 
     except Exception as e:
-        logger.error(f"Error posting daily verse: {e}")
+            logger.error(f"Error posting daily verse: {e}")
 
 def setup_scheduler():
     """
