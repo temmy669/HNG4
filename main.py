@@ -51,6 +51,13 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+from uuid import uuid4
+import logging
+
+logger = logging.getLogger(__name__)
+
 @app.post("/a2a")
 async def a2a_endpoint(request: Request):
     """Main A2A endpoint for verse agent"""
@@ -82,18 +89,16 @@ async def a2a_endpoint(request: Request):
         task_id = None
         config = {}
 
-        # Handle different method types safely
         if hasattr(rpc_request.params, 'message'):
             # message/send method
             messages = [rpc_request.params.message]
-            config = rpc_request.params.configuration.model_dump() if hasattr(rpc_request.params, 'configuration') and rpc_request.params.configuration else {}
+            config = rpc_request.params.configuration.model_dump() if hasattr(rpc_request.params, 'configuration') else {}
         elif hasattr(rpc_request.params, 'messages'):
             # execute method
             messages = rpc_request.params.messages
             context_id = getattr(rpc_request.params, 'contextId', None)
             task_id = getattr(rpc_request.params, 'taskId', None)
         else:
-            # Handle unknown methods gracefully
             return JSONResponse(
                 status_code=200,
                 content={
@@ -106,48 +111,44 @@ async def a2a_endpoint(request: Request):
                 }
             )
 
-        # Generate IDs if not provided
+        # Generate IDs if missing
         context_id = context_id or str(uuid4())
         task_id = task_id or str(uuid4())
 
-        # Store webhook configuration if provided (for scheduler use)
-        if config.get('pushNotificationConfig'):
-            global webhook_configs
-            webhook_config = config['pushNotificationConfig']
-            # Use a simple key - in production, you'd use user/channel ID
-            config_key = "default"  # Could be derived from request context
-            webhook_configs[config_key] = {
-                'url': webhook_config.get('url'),
-                'token': webhook_config.get('token'),
-                'authentication': webhook_config.get('authentication')
-            }
-            logger.info(f"Stored webhook config for key: {config_key}")
-
-        # Process with verse agent
+        # Process with agent logic
         from core.ai_service import process_messages
-        result = await process_messages(
-            messages=messages,
-            context_id=context_id,
-            task_id=task_id,
-            config=config
+        result = await process_messages(messages=messages, context_id=context_id, task_id=task_id, config=config)
+
+        # A2A-Compliant Response
+        a2a_response = {
+            "jsonrpc": "2.0",
+            "id": rpc_request.id,
+            "result": {
+                "reply": [
+                    {
+                        "kind": "text",
+                        "text": result.status.message.parts[0].text
+                    }
+                ]
+            }
+        }
+
+        return JSONResponse(content=a2a_response)
+
+    except Exception as e:
+        logger.error(f"Error processing request: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "jsonrpc": "2.0",
+                "id": body.get("id") if "body" in locals() else None,
+                "error": {
+                    "code": -32603,
+                    "message": "Internal error",
+                    "data": {"details": str(e)}
+                }
+            }
         )
-
-        # Send webhook notification if configured in pushNotificationConfig
-        if config.get('pushNotificationConfig') and not config.get('blocking', True):
-            from scheduler import send_webhook_notification
-            webhook_url = config['pushNotificationConfig']['url']
-            auth = config['pushNotificationConfig'].get('authentication')
-            # Send webhook asynchronously without awaiting
-            import asyncio
-            asyncio.create_task(send_webhook_notification(webhook_url, result, auth))
-
-        # Build response
-        response = JSONRPCResponse(
-            id=rpc_request.id,
-            result=result
-        )
-
-        return response.model_dump()
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
