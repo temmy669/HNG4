@@ -134,7 +134,7 @@ async def process_messages(
             response = model.generate_content(
                             f"You are a friendly assistant. Reply briefly and naturally to this message: '{query}'. \
                         If they didn't ask for a Bible verse, respond casually and at the end politely ask: \
-                        'Would you like me to share a Bible verse? You can say something like: I need a verse on Love.' \
+                        You can say something like: I need a verse on Love.' \
                         Keep your tone warm, concise, and human-like."
                         )
             response_message = A2AMessage(

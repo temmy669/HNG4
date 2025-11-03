@@ -19,4 +19,4 @@ DAILY_POST_TIME = os.getenv("DAILY_POST_TIME") # UTC time for daily verse, e.g.,
 # Telex A2A settings
 TELEX_BASE_URL = os.getenv("TELEX_BASE_URL", "https://api.telex.im")
 TELEX_WEBHOOK_HOOK_ID = os.getenv("TELEX_WEBHOOK_HOOK_ID")  # The {hookId} from webhook URL
-TELEX_BEARER_TOKEN = os.getenv("TELEX_BEARER_TOKEN")  # Bearer token for authentication
+TELEX_BEARER_TOKEN = os.getenv("TELEX_BEARER_TOKEN", "").strip()  # Bearer token for authentication

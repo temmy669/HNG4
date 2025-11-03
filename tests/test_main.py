@@ -4,6 +4,7 @@ from httpx import AsyncClient, ASGITransport
 from unittest.mock import patch, MagicMock
 from main import app
 from core.models import JSONRPCResponse, VerseResult, A2AMessage, MessagePart, TaskResult, TaskStatus, MessageParams
+from core.ai_service import process_verse_request
 
 @pytest.fixture
 def client():
@@ -12,7 +13,7 @@ def client():
 
 @pytest.mark.asyncio
 async def test_valid_message_send_request(client):
-    with patch('ai_service.process_verse_request') as mock_process:
+    with patch('core.ai_service.process_verse_request') as mock_process:
         mock_verse = VerseResult(
             topic="love",
             verse_reference="1 John 4:8",
@@ -76,7 +77,7 @@ async def test_missing_params(client):
 
 @pytest.mark.asyncio
 async def test_ai_service_failure(client):
-    with patch('ai_service.process_verse_request', side_effect=Exception("AI service error")):
+    with patch('core.ai_service.process_verse_request', side_effect=Exception("AI service error")):
         response = await client.post("/a2a", json={
             "jsonrpc": "2.0",
             "id": "123",
@@ -96,7 +97,7 @@ async def test_ai_service_failure(client):
 
 @pytest.mark.asyncio
 async def test_execute_method(client):
-    with patch('ai_service.process_verse_request') as mock_process:
+    with patch('core.ai_service.process_verse_request') as mock_process:
         mock_verse = VerseResult(
             topic="faith",
             verse_reference="Hebrews 11:1",

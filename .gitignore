@@ -149,3 +149,6 @@ logs/
 *.log
 bible_cache/
 temp/
+
+tweet_caption.txt
+blog_post.md

@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 # Global agent state (in production, use Redis or database)
 verse_agent = None
 
+# Store for webhook configurations
+webhook_configs = {}
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown"""
@@ -107,6 +110,19 @@ async def a2a_endpoint(request: Request):
         context_id = context_id or str(uuid4())
         task_id = task_id or str(uuid4())
 
+        # Store webhook configuration if provided (for scheduler use)
+        if config.get('pushNotificationConfig'):
+            global webhook_configs
+            webhook_config = config['pushNotificationConfig']
+            # Use a simple key - in production, you'd use user/channel ID
+            config_key = "default"  # Could be derived from request context
+            webhook_configs[config_key] = {
+                'url': webhook_config.get('url'),
+                'token': webhook_config.get('token'),
+                'authentication': webhook_config.get('authentication')
+            }
+            logger.info(f"Stored webhook config for key: {config_key}")
+
         # Process with verse agent
         from core.ai_service import process_messages
         result = await process_messages(
@@ -115,6 +131,15 @@ async def a2a_endpoint(request: Request):
             task_id=task_id,
             config=config
         )
+
+        # Send webhook notification if configured in pushNotificationConfig
+        if config.get('pushNotificationConfig') and not config.get('blocking', True):
+            from scheduler import send_webhook_notification
+            webhook_url = config['pushNotificationConfig']['url']
+            auth = config['pushNotificationConfig'].get('authentication')
+            # Send webhook asynchronously without awaiting
+            import asyncio
+            asyncio.create_task(send_webhook_notification(webhook_url, result, auth))
 
         # Build response
         response = JSONRPCResponse(

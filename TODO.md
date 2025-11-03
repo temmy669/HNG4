@@ -11,6 +11,12 @@
 - [x] Set up environment variables for API keys
 - [x] Test the endpoints manually
 - [x] Ensure scheduler runs in background
+- [x] Run comprehensive test suite (26/26 tests passing)
+- [x] Fix all test failures and Pylance errors
+- [x] Update README with webhook integration details
+- [x] Implement webhook notification pattern for Telex channels
+- [x] Store pushNotificationConfig from webhook requests
+- [x] Use stored configs in scheduler for daily verse posting
 
 ## Updated Steps to Complete:
 

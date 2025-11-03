@@ -8,6 +8,8 @@ A FastAPI-based agent that provides daily Bible verses with AI-powered reflectio
 - **Daily Verse Clock System**: Automatically posts daily verses at a configurable UTC time
 - **AI Integration**: Uses gemini-2.5-flash for topic extraction and verse reflections
 - **A2A Protocol Compliance**: Supports JSON-RPC 2.0 with `message/send` and `execute` methods
+- **Webhook Integration**: Supports both blocking and non-blocking webhook notifications for real-time responses
+- **Dynamic Webhook Configuration**: Automatically learns and stores webhook URLs and authentication from incoming Telex requests
 - **Configurable**: Translation and API settings via environment variables
 - **Error Handling**: Comprehensive error handling for API failures and invalid requests
 
@@ -155,11 +157,11 @@ pytest test_main.py
 
 ## Architecture
 
-- **main.py**: FastAPI application with A2A endpoints and scheduler
+- **main.py**: FastAPI application with A2A endpoints, webhook configuration storage, and scheduler
 - **models.py**: Pydantic models for A2A protocol and responses
 - **ai_service.py**: Google Gemini integration for topic extraction and reflections
 - **bible_api.py**: Bible API client using labs.bible.org
-- **scheduler.py**: APScheduler for daily verse posting
+- **scheduler.py**: APScheduler for daily verse posting with dynamic webhook support
 - **config.py**: Configuration management
 
 ## Dependencies
@@ -175,45 +177,57 @@ pytest test_main.py
 
 ## Daily Verse Posting
 
-The agent automatically posts daily verses to Telex channels using A2A webhooks. To set this up:
+The agent automatically posts daily verses to Telex channels using A2A webhooks. There are two ways to configure webhook delivery:
 
-1. **Get your Telex Webhook Hook ID**: In your Telex integration settings, find the webhook URL and extract the UUID (e.g., `019a3cb6-f1aa-7817-af7e-49baddd4022b` from `https://api.telex.im/a2a/webhooks/{your_chanel_id_here}`)
+### Method 1: Environment Variables (Static Configuration)
 
-2. **Get your Bearer Token**: Obtain the Bearer token from your Telex integration settings
+Set these in your `.env` file:
 
-3. **Configure Environment Variables**:
+```env
+TELEX_WEBHOOK_HOOK_ID=your_hook_id
+TELEX_BEARER_TOKEN=your_bearer_token
+DAILY_POST_TIME=08:00  # UTC time
+```
 
-   ```env
-   TELEX_WEBHOOK_HOOK_ID=
-   TELEX_BEARER_TOKEN=your_bearer_token_here
-   DAILY_POST_TIME=08:00  # UTC time
-   ```
+### Method 2: Dynamic Configuration (Recommended)
 
-4. **A2A Webhook Message Format**:
-   ```json
-   {
-     "jsonrpc": "2.0",
-     "id": "75d53d9705054a60b1cb2d2d1887c242",
-     "method": "message/send",
-     "params": {
-       "message": {
-         "kind": "message",
-         "role": "agent",
-         "parts": [
-           {
-             "kind": "text",
-             "text": "📖 **Daily Bible Verse**\n\n**Genesis 1:1**\nIn the beginning God created the heavens and the earth.\n\n💭 *This verse speaks to the importance of faith in our spiritual journey.*",
-             "metadata": null
-           }
-         ],
-         "messageId": "db84ba2b62a0422e968d56591b9bb01a",
-         "contextId": null,
-         "taskId": null
-       },
-       "metadata": null
-     }
-   }
-   ```
+The agent automatically learns webhook configuration from incoming Telex requests. When a user sends a request with `pushNotificationConfig`, the agent stores the URL and authentication details for future daily verse posting.
+
+**How it works:**
+
+1. User sends a request to `/a2a` with `pushNotificationConfig` containing URL and token
+2. Agent extracts and stores this configuration
+3. Daily scheduler uses the stored configuration to post verses
+4. No manual webhook setup required - the agent learns from interactions
+
+### A2A Webhook Message Format
+
+Daily verses are sent in this JSON-RPC format:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "75d53d9705054a60b1cb2d2d1887c242",
+  "method": "message/send",
+  "params": {
+    "message": {
+      "kind": "message",
+      "role": "agent",
+      "parts": [
+        {
+          "kind": "text",
+          "text": "📖 **Daily Bible Verse**\n\n**Genesis 1:1**\nIn the beginning God created the heavens and the earth.\n\n💭 *This verse speaks to the importance of faith in our spiritual journey.*",
+          "metadata": null
+        }
+      ],
+      "messageId": "db84ba2b62a0422e968d56591b9bb01a",
+      "contextId": null,
+      "taskId": null
+    },
+    "metadata": null
+  }
+}
+```
 
 ## Future Improvements
 

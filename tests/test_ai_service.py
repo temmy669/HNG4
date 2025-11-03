@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from ai_service import extract_topic, generate_reflection, process_verse_request
+from core.ai_service import extract_topic, generate_reflection, process_verse_request
 from core.models import VerseResult
 
-@patch('ai_service.model.generate_content')
+@patch('core.ai_service.model.generate_content')
 def test_extract_topic(mock_generate):
     mock_response = MagicMock()
     mock_response.text = "love"
@@ -13,7 +13,7 @@ def test_extract_topic(mock_generate):
     assert topic == "love"
     mock_generate.assert_called_once()
 
-@patch('ai_service.model.generate_content')
+@patch('core.ai_service.model.generate_content')
 def test_generate_reflection(mock_generate):
     mock_response = MagicMock()
     mock_response.text = "This verse emphasizes the importance of love."
@@ -23,9 +23,9 @@ def test_generate_reflection(mock_generate):
     assert reflection == "This verse emphasizes the importance of love."
     mock_generate.assert_called_once()
 
-@patch('ai_service.extract_topic')
-@patch('ai_service.generate_reflection')
-@patch('ai_service.get_verse_by_topic')
+@patch('core.ai_service.extract_topic')
+@patch('core.ai_service.generate_reflection')
+@patch('core.bible_api.get_verse_by_topic')
 def test_process_verse_request(mock_get_verse, mock_gen_reflect, mock_extract):
     mock_extract.return_value = "love"
     mock_verse = VerseResult(
@@ -46,12 +46,13 @@ def test_process_verse_request(mock_get_verse, mock_gen_reflect, mock_extract):
     mock_get_verse.assert_called_once_with("love")
     mock_gen_reflect.assert_called_once_with("Whoever does not love does not know God, because God is love.", "love")
 
-@patch('ai_service.model.generate_content', side_effect=Exception("API error"))
+@patch('core.ai_service.model.generate_content', side_effect=Exception("API error"))
 def test_extract_topic_failure(mock_generate):
     with pytest.raises(Exception):
         extract_topic("love")
 
-@patch('ai_service.model.generate_content', side_effect=Exception("API error"))
+@patch('core.ai_service.model.generate_content', side_effect=Exception("API error"))
 def test_generate_reflection_failure(mock_generate):
-    with pytest.raises(Exception):
-        generate_reflection("text", "topic")
+    # The function should handle exceptions gracefully and return a fallback message
+    result = generate_reflection("text", "topic")
+    assert "importance of topic" in result
