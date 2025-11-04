@@ -157,7 +157,7 @@ async def process_messages(
                             f"**{verse_result.topic}**\n"
                             f"{verse_result.verse_reference}\n"
                             f"{verse_result.verse_text}\n\n"
-                            f"🕊️ Reflection: {verse_result.reflection}"
+                            f"🕊️{verse_result.reflection}"
                         )
                     ),
                     MessagePart(

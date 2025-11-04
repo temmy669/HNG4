@@ -147,13 +147,12 @@ async def a2a_endpoint(request: Request):
             import asyncio
             asyncio.create_task(send_webhook_notification(webhook_url, result, auth))
 
-        # Build response
-        response = JSONRPCResponse(
-            id=rpc_request.id,
-            result=result
-        )
+        return {
+    "jsonrpc": "2.0",
+    "id": rpc_request.id,
+    "result": result.model_dump()
+    }
 
-        return response.model_dump()
 
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
